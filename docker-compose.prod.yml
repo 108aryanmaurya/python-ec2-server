@@ -1,0 +1,40 @@
+version: "3.8"
+
+services:
+  mongo:
+    image: mongo
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin
+    volumes:
+      - mongodb_data:/data/db/
+
+  valkey:
+    image: valkey/valkey:latest
+    volumes:
+      - valkey_data:/usr/local/etc/valkey
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - ./.env
+    ports:
+      - "8000:8000"
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command:
+      ["rq", "worker", "--with-scheduler", "--url", "redis://valkey:6379"]
+    env_file:
+      - ./.env
+    depends_on:
+      - valkey
+
+volumes:
+  mongodb_data:
+  valkey_data:

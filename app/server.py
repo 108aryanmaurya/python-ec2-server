@@ -4,7 +4,7 @@ from uuid import uuid4
 from .utils.file import save_to_disk
 from .db.collections.files import files_collection,FileSchema
 from .queue.q import  q
-from .queue.workers import  process_file,proccess_file_with_jd
+from .queue.workers import  process_file
 from bson import ObjectId
 app = FastAPI() 
 
@@ -52,33 +52,3 @@ async def get_file_by_id(id:str=Path(...,description="iD of the file")):
                    }
                    
                    
-@app.post("/analyse-resume-with-jd")
-async def upload_file(file: UploadFile, jd:UploadFile):
-    db_file=await files_collection.insert_one(
-        document=FileSchema(
-            name=file.filename,
-            jd_name=jd.filename,
-            status="saving",
-            jd=jd
-        )
-    ) 
-    file_path = f"/mnt/uploads/{str(db_file.inserted_id)}/{file.filename}"
-    jd_path = f"/mnt/uploads/{str(db_file.inserted_id)}/{jd.filename}"
-    await save_to_disk(file=await file.read() , path=file_path)
-    await save_to_disk(file=await jd.read() , path=jd_path)
-
-    q.enqueue(proccess_file_with_jd,str(db_file.inserted_id),file_path,jd_path)
-
-    await files_collection.update_one(
-        {
-        "_id":db_file.inserted_id
-        },
-        {
-            "$set":{
-                "status":"queued"
-            }
-        }
-    )
-    return {"file_id":str(db_file.inserted_id)}
-
-                    

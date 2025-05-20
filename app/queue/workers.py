@@ -4,7 +4,6 @@ import os
 from bson import  ObjectId
 from openai import OpenAI
 import base64
-from ..graphs.resume_graph import call_graph
 
 client =OpenAI()
 
@@ -61,41 +60,3 @@ async def process_file(id:str,file_path:str):
     
     
     
-    
-
-async def proccess_file_with_jd(id:str,file_path:str,jd_path:str):
-            await files_collection.update_one({"_id":ObjectId(id)}
-                                     ,{"$set":{"status":"processing"} }
-                                      )
-            print("I am processing file")
-            file_pages=convert_from_path(file_path)
-            jd_pages=convert_from_path(jd_path)
-            file_images=[]
-            jd_images=[]
-            for i,page in enumerate(file_pages):
-                image_save_path=f"/mnt/uploads/images/{id}/file-images-{i}.jpg"
-                os.makedirs(os.path.dirname(image_save_path), exist_ok=True)
-                file_images.append(image_save_path)
-                page.save(image_save_path,"JPEG")
-             
-            for i,page in enumerate(jd_pages):
-                image_save_path=f"/mnt/uploads/images/{id}/jd-images-{i}.jpg"
-                os.makedirs(os.path.dirname(image_save_path), exist_ok=True)
-                jd_images.append(image_save_path)
-                page.save(image_save_path,"JPEG")
-                
-            await files_collection.update_one({"_id":id},{
-                "$set":{
-                    "status":"converting to images success"
-                }
-            })
-            print("Imag saved sucess")
-            file_images_base64=[encode_image(img) for img in file_images ]
-            jd_images_base64=[encode_image(img) for img in jd_images ]
-            
-            call_graph(id,jd_images_base64,file_images_base64)            
-            
-            
-            
-
-            
