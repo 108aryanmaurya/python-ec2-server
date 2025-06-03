@@ -1,3 +1,4 @@
-from pymongo import AsyncMongoClient
-mongo_client:AsyncMongoClient=AsyncMongoClient("mongodb://admin:admin@mongo:27017")
+from motor.motor_asyncio import AsyncIOMotorClient
+
+mongo_client:AsyncIOMotorClient=AsyncIOMotorClient("mongodb://admin:admin@mongo:27017")
 
